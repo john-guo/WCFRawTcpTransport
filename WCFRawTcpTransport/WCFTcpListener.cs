@@ -51,11 +51,20 @@ namespace WCFRawTcpTransport
         {
             ISocketChannel session;
             _sessions.TryGetValue(sessionId, out session);
-            using (var scope = new OperationContextScope(session))
-            {
-                _callbackChannel = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
-                OnData(sessionId, data);
-            }
+
+            //Cannot use the SocketChannel as ServiceChannel to retrive CallbackChannel.
+            //using (var scope = new OperationContextScope(session))
+            //{
+            //    _callbackChannel = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
+            //    OnData(sessionId, data);
+            //}
+
+
+            //BUG: only one client (first connected) can be called back. 
+            _callbackChannel = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
+
+
+            OnData(sessionId, data);
         }
 
         protected override void _OnConnect(ISocketChannel session)
