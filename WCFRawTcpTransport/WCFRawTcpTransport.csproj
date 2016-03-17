@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncResult.cs" />
-    <Compile Include="CustomBodyWriter.cs" />
     <Compile Include="DefaultInnerEncoder.cs" />
     <Compile Include="InnerEncoderBingdingElement.cs" />
     <Compile Include="InvokerBehaviorAttribute.cs" />
