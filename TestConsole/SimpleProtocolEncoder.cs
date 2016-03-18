@@ -9,7 +9,7 @@ using WCFRawTcpTransport;
 
 namespace TestConsole
 {
-    class InnerEncoder : IRealEncoder
+    class SimpleProtocolEncoder : IRealEncoder
     {
         public bool TryRead(ISegementBuffer buffer, BufferManager bufferManager, out ArraySegment<byte> data)
         {
