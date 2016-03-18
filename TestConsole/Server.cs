@@ -18,7 +18,7 @@ namespace TestConsole
         {
             Console.WriteLine(BitConverter.ToString(data));
 
-            Callback.Invoke(sessionId, data);
+            Callback(data);
         }
 
         protected override void OnDisconnect(ISocketChannel session)

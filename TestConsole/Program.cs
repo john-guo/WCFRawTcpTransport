@@ -15,6 +15,7 @@ namespace TestConsole
             if (args.Length > 0)
             {
                 var client = new Client(uri);
+                client.Open();
                 do
                 {
                     var line = Console.ReadLine();
@@ -25,7 +26,7 @@ namespace TestConsole
             else
             {
                 var server = new Server(uri);
-
+                server.Open();
                 Console.ReadLine();
             }
 

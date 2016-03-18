@@ -19,11 +19,10 @@ namespace WCFRawTcpTransport
         private EndpointAddress _local;
         private EndpointAddress _remote;
         private BindingContext _context;
-        private BufferManager _bufferManager;
-
-        private ConcurrentQueue<ArraySegment<byte>> _queue;
         private ConcurrentQueue<Message> _msgQueue;
         private MessageEncoder _encoder;
+        internal BufferManager _bufferManager;
+        internal ConcurrentQueue<ArraySegment<byte>> _queue;
 
         internal CustomTcpSocketChannel(Socket socket, ChannelManagerBase channelManager, MessageEncoderFactory factory, BindingContext context)
             : base(channelManager)
@@ -136,61 +135,57 @@ namespace WCFRawTcpTransport
             public object State { get; set; }
             public AsyncCallback Callback { get; set; }
             public byte[] Buffer { get; set; }
-            public int Size { get; set; }
+            public int Count { get; set; }
             public int Offset { get; set; }
-        }
+            public CustomTcpSocketChannel Channel;
 
-        private void receiveCallback(IAsyncResult result)
-        {
-            try
+            public AsyncStateItem(CustomTcpSocketChannel channel)
             {
-                var item = result.AsyncState as AsyncStateItem;
-                int size = _socket.EndReceive(result);
-
-                _queue.Enqueue(new ArraySegment<byte>(item.Buffer, 0, size));
-
-                var ar = new ChangableAsyncResult(result);
-                ar.AsyncState = item.State;
-
-                item.Callback(ar);
+                Channel = channel;
             }
-            catch (Exception ex)
-            {
-                Close();
-            }
-        }
 
-        private void sendCallback(IAsyncResult result)
-        {
-            try
+            public void ReceiveCallback(IAsyncResult ar)
             {
-                var item = result.AsyncState as AsyncStateItem;
-                int size = _socket.EndSend(result);
-
-                if (size < item.Size)
+                try
                 {
-                    var sitem = new AsyncStateItem()
+                    int size = Channel.Socket.EndReceive(ar);
+
+                    Channel._queue.Enqueue(new ArraySegment<byte>(Buffer, 0, size));
+
+                    Callback(ar);
+                }
+                catch (Exception ex)
+                {
+                    Channel.Close();
+                }
+            }
+
+            public void SendCallback(IAsyncResult ar)
+            {
+                try
+                {
+                    int size = Channel.Socket.EndSend(ar);
+
+                    if (size < Count)
                     {
-                        State = item.State,
-                        Callback = item.Callback,
-                        Buffer = item.Buffer,
-                        Size = item.Size - size,
-                        Offset = item.Offset + size
-                    };
+                        Offset += size;
+                        Count -= size;
 
-                    _socket.BeginSend(item.Buffer, item.Offset, item.Size, SocketFlags.None, sendCallback, item);
+                        Channel.Socket.BeginSend(Buffer, Offset, Count, SocketFlags.None, SendCallback, State);
+                    }
+                    else
+                    {
+                        Channel._bufferManager.ReturnBuffer(Buffer);
+                        Callback(ar);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    _bufferManager.ReturnBuffer(item.Buffer);
-                    item.Callback(result);
+                    Channel.Close();
                 }
-            }
-            catch (Exception ex)
-            {
-                Close();
             }
         }
+
 
         private Message AssemblyMessage(Message message)
         {
@@ -211,13 +206,14 @@ namespace WCFRawTcpTransport
         public IAsyncResult BeginReceive(TimeSpan timeout, AsyncCallback callback, object state)
         {
             var buffer = _bufferManager.TakeBuffer(CustomTransportConstant.MaxBufferSize);
-            var item = new AsyncStateItem()
+
+            var asyncItem = new AsyncStateItem(this)
             {
+                Buffer = buffer,
                 State = state,
-                Callback = callback,
-                Buffer = buffer
+                Callback = callback
             };
-            return _socket.BeginReceive(buffer, 0, CustomTransportConstant.MaxBufferSize, SocketFlags.None, receiveCallback, item);
+            return _socket.BeginReceive(buffer, 0, CustomTransportConstant.MaxBufferSize, SocketFlags.None, asyncItem.ReceiveCallback, state);
         }
 
         public IAsyncResult BeginSend(Message message, AsyncCallback callback, object state)
@@ -229,16 +225,19 @@ namespace WCFRawTcpTransport
         {
             message = DisassemblyMessage(message);
             var buffer = _encoder.WriteMessage(message, int.MaxValue, _bufferManager, 0);
-            var item = new AsyncStateItem()
+            int offset = buffer.Offset;
+            int count = buffer.Count;
+
+            var asyncItem = new AsyncStateItem(this)
             {
+                Buffer = buffer.Array,
                 State = state,
                 Callback = callback,
-                Buffer = buffer.Array,
-                Size = buffer.Count,
-                Offset = buffer.Offset
+                Offset = offset,
+                Count = count
             };
 
-            return _socket.BeginSend(buffer.Array, buffer.Offset, buffer.Count, SocketFlags.None, sendCallback, item);
+            return _socket.BeginSend(buffer.Array, offset, count, SocketFlags.None, asyncItem.SendCallback, state);
         }
 
         public IAsyncResult BeginTryReceive(TimeSpan timeout, AsyncCallback callback, object state)

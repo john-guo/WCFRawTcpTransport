@@ -11,19 +11,23 @@ namespace TestConsole
 {
     class SimpleProtocolEncoder : IRealEncoder
     {
+        const int headerSize = 4;
+        const int minMessageSize = headerSize + 1;
+
+
         public bool TryRead(ISegementBuffer buffer, BufferManager bufferManager, out ArraySegment<byte> data)
         {
             byte[] item;
             data = default(ArraySegment<byte>);
 
-            if (buffer.Count < CustomTransportConstant.minMessageSize)
+            if (buffer.Count < minMessageSize)
                 return false;
 
             int header = 0;
             do
             {
-                item = bufferManager.TakeBuffer(CustomTransportConstant.headerSize);
-                if (!buffer.TryPeek(CustomTransportConstant.headerSize, item))
+                item = bufferManager.TakeBuffer(headerSize);
+                if (!buffer.TryPeek(headerSize, item))
                 {
                     bufferManager.ReturnBuffer(item);
                     return false;
@@ -33,10 +37,10 @@ namespace TestConsole
                 header = IPAddress.NetworkToHostOrder(header);
                 bufferManager.ReturnBuffer(item);
 
-                if (header > buffer.Count - CustomTransportConstant.headerSize)
+                if (header > buffer.Count - headerSize)
                     return false;
 
-                buffer.Skip(CustomTransportConstant.headerSize);
+                buffer.Skip(headerSize);
 
             } while (header <= 0);
 
@@ -52,7 +56,7 @@ namespace TestConsole
 
         public ArraySegment<byte> TryWrite(byte[] data, BufferManager bufferManager, int messageOffset)
         {
-            var packetLen = data.Length + CustomTransportConstant.headerSize;
+            var packetLen = data.Length + headerSize;
             var body = bufferManager.TakeBuffer(packetLen);
             int header = IPAddress.HostToNetworkOrder(data.Length);
             var hb = BitConverter.GetBytes(header);

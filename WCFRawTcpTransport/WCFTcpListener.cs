@@ -16,7 +16,7 @@ namespace WCFRawTcpTransport
         private IInvokerServiceCallback _currentCallback;
         private ConcurrentDictionary<string, SessionItem> _sessions;
 
-        class SessionItem
+        protected class SessionItem
         {
             public ISocketChannel Session;
             public IInvokerServiceCallback Callback;
@@ -31,8 +31,6 @@ namespace WCFRawTcpTransport
             var endpoint = _host.AddServiceEndpoint(typeof(IInvokerService), _customBinding, uri);
             var behavior = new InvokerServiceEndpointBehavior();
             endpoint.EndpointBehaviors.Add(behavior);
-
-            _host.Open();
         }
 
         public WCFTcpListener(string uri) : this(uri, null)
@@ -40,25 +38,37 @@ namespace WCFRawTcpTransport
 
         }
 
-        protected IInvokerServiceCallback Callback
+        protected SessionItem GetSessionItem(string sessionId)
         {
-            get
-            {
-                return _currentCallback;
-            }
+            SessionItem item;
+            if (!_sessions.TryGetValue(sessionId, out item))
+                throw new InvalidOperationException();
+
+            return item;
+        }
+
+        protected void Callback(string sessionId, byte[] data)
+        {
+            var item = GetSessionItem(sessionId);
+            if (item.Callback == null)
+                throw new InvalidOperationException();
+
+            item.Callback.Invoke(sessionId, data);
+        }
+
+        protected void Callback(byte[] data)
+        {
+            _currentCallback.Invoke(string.Empty, data);
         }
 
         protected override void OnInvoke(string sessionId, byte[] data)
         {
-            SessionItem item;
-            _sessions.TryGetValue(sessionId, out item);
+            var item = GetSessionItem(sessionId);
 
-            //BUG: only one client (first connected) can be called back.
             if (item.Callback == null)
                 item.Callback = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
             _currentCallback = item.Callback;
-
-
+            
             OnData(sessionId, data);
         }
 
@@ -78,7 +88,12 @@ namespace WCFRawTcpTransport
             _sessions.TryRemove(session.SessionId, out item);
         }
 
-        public override void Dispose()
+        public override void Open()
+        {
+            _host.Open();
+        }
+
+        public override void Close()
         {
             _host.Close();
         }

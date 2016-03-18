@@ -4,15 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{496EC4EB-5C47-4420-9DE3-216A7DC51F75}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{16F11191-158F-4756-9555-2B5626E6680E}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WCFRawTcpTransport</RootNamespace>
-    <AssemblyName>WCFRawTcpTransport</AssemblyName>
+    <RootNamespace>WCFRawTcpTest_sswinform</RootNamespace>
+    <AssemblyName>WCFRawTcpTest_sswinform</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -32,42 +35,59 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsyncResult.cs" />
-    <Compile Include="CustomTcpChannelFactory.cs" />
-    <Compile Include="CustomTcpChannelListener.cs" />
-    <Compile Include="CustomTcpSocketSessionChannel.cs" />
-    <Compile Include="DefaultInnerEncoder.cs" />
-    <Compile Include="InnerEncoderBingdingElement.cs" />
-    <Compile Include="InvokerBehaviorAttribute.cs" />
-    <Compile Include="CustomTransportConstant.cs" />
-    <Compile Include="CustomEncoder.cs" />
-    <Compile Include="CustomEncoderFactory.cs" />
-    <Compile Include="CustomEncodingBindingElement.cs" />
-    <Compile Include="CustomTcpBindingElement.cs" />
-    <Compile Include="CustomTcpSessionChannelFactory.cs" />
-    <Compile Include="CustomTcpSessionChannelListener.cs" />
-    <Compile Include="CustomTcpSocketChannel.cs" />
-    <Compile Include="InvokerServiceEndpointBehavior.cs" />
-    <Compile Include="InvokerStub.cs" />
-    <Compile Include="ISegementBuffer.cs" />
-    <Compile Include="IRealEncoder.cs" />
-    <Compile Include="IInvokerService.cs" />
-    <Compile Include="ISocketChannel.cs" />
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SimpleLoopBuffer.cs" />
-    <Compile Include="WCFTcpBase.cs" />
-    <Compile Include="WCFTcpClient.cs" />
-    <Compile Include="WCFTcpListener.cs" />
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WCFRawTcpTest_libss\WCFRawTcpTest_libss.csproj">
+      <Project>{fc2e79f2-a267-44d4-a0df-fafcf79515c3}</Project>
+      <Name>WCFRawTcpTest_libss</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WCFRawTcpTransport\WCFRawTcpTransport.csproj">
+      <Project>{496ec4eb-5c47-4420-9de3-216a7dc51f75}</Project>
+      <Name>WCFRawTcpTransport</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WCFRawTcpTransport", "WCFRa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsole", "TestConsole\TestConsole.csproj", "{CBE2235C-3569-411F-8C4F-72741492FB7D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WCFRawTcpTest_libss", "WCFRawTcpTest_libss\WCFRawTcpTest_libss.csproj", "{FC2E79F2-A267-44D4-A0DF-FAFCF79515C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WCFRawTcpTest_sswinform", "WCFRawTcpTest_sswinform\WCFRawTcpTest_sswinform.csproj", "{16F11191-158F-4756-9555-2B5626E6680E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{CBE2235C-3569-411F-8C4F-72741492FB7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBE2235C-3569-411F-8C4F-72741492FB7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBE2235C-3569-411F-8C4F-72741492FB7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC2E79F2-A267-44D4-A0DF-FAFCF79515C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC2E79F2-A267-44D4-A0DF-FAFCF79515C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC2E79F2-A267-44D4-A0DF-FAFCF79515C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC2E79F2-A267-44D4-A0DF-FAFCF79515C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16F11191-158F-4756-9555-2B5626E6680E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16F11191-158F-4756-9555-2B5626E6680E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16F11191-158F-4756-9555-2B5626E6680E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16F11191-158F-4756-9555-2B5626E6680E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

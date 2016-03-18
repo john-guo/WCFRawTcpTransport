@@ -10,7 +10,7 @@ using System.ServiceModel;
 
 namespace WCFRawTcpTransport
 {
-    class CustomTcpChannelListener : ChannelListenerBase<IDuplexChannel>
+    class CustomTcpSessionChannelListener : ChannelListenerBase<IDuplexSessionChannel>
     {
         private Uri _uri;
         private TcpListener _listener;
@@ -18,7 +18,7 @@ namespace WCFRawTcpTransport
         private BindingContext _context;
         private InvokerStub _stub;
 
-        internal CustomTcpChannelListener(BindingContext context, MessageEncoderFactory factory, InvokerStub stub)
+        internal CustomTcpSessionChannelListener(BindingContext context, MessageEncoderFactory factory, InvokerStub stub)
             : base(context.Binding)
         {
             _context = context;
@@ -82,9 +82,9 @@ namespace WCFRawTcpTransport
             _listener = null;
         }
 
-        private CustomTcpSocketChannel newChannel(Socket socket)
+        private CustomTcpSocketSessionChannel newChannel(Socket socket)
         {
-            var channel = new CustomTcpSocketChannel(socket, this, _factory, _context);
+            var channel = new CustomTcpSocketSessionChannel(socket, this, _factory, _context);
             channel.Opened += Channel_Opened;
             channel.Closed += Channel_Closed;
             return channel;
@@ -104,7 +104,7 @@ namespace WCFRawTcpTransport
             _stub.OnOpen(sender as ISocketChannel);
         }
 
-        protected override IDuplexChannel OnAcceptChannel(TimeSpan timeout)
+        protected override IDuplexSessionChannel OnAcceptChannel(TimeSpan timeout)
         {
             return newChannel(_listener.AcceptSocket());
         }
@@ -136,7 +136,7 @@ namespace WCFRawTcpTransport
             StopListen();
         }
 
-        protected override IDuplexChannel OnEndAcceptChannel(IAsyncResult result)
+        protected override IDuplexSessionChannel OnEndAcceptChannel(IAsyncResult result)
         {
             return newChannel(_listener.EndAcceptSocket(result));
         }

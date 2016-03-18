@@ -22,7 +22,6 @@ namespace WCFRawTcpTransport
             endpoint.EndpointBehaviors.Add(behavior);
 
             _factory = new DuplexChannelFactory<IInvokerService>(new InstanceContext(_stub), endpoint);
-            _service = _factory.CreateChannel();
         }
 
         public WCFTcpClient(string uri) : this(uri, null)
@@ -35,12 +34,17 @@ namespace WCFRawTcpTransport
             get { return _service; }
         }
 
-        public void Invoke(byte[] data)
+        public virtual void Invoke(byte[] data)
         {
             Service.Invoke(string.Empty, data);
         }
 
-        public override void Dispose()
+        public override void Open()
+        {
+            _service = _factory.CreateChannel();
+        }
+
+        public override void Close()
         {
             _factory.Close();
         }

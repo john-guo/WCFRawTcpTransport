@@ -48,8 +48,12 @@ namespace WCFRawTcpTransport
         protected abstract void OnConnect(ISocketChannel session);
         protected abstract void OnData(string sessionId, byte[] data);
 
+        public abstract void Open();
+        public abstract void Close();
+
         public virtual void Dispose()
         {
+            Close();
         }
     }
 }
