@@ -9,7 +9,7 @@ namespace TestConsole
 {
     class Client : WCFTcpClient
     {
-        public Client(string uri) : base(uri, new InnerEncoder())
+        public Client(string uri) : base(uri, new SimpleProtocolEncoder())
         {
 
         }
