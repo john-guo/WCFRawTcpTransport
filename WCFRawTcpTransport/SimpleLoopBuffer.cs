@@ -74,7 +74,8 @@ namespace WCFRawTcpTransport
 
         public void Clear()
         {
-            begin = end = 0;
+            lock (this)
+                begin = end = 0;
         }
 
         public bool TryAdd(byte[] data)
@@ -84,95 +85,106 @@ namespace WCFRawTcpTransport
 
         public bool TryAdd(byte[] data, int offset, int length)
         {
-            if (length + offset > data.Length)
-                return false;
-
-            if (length > Size - Count)
-                return false;
-
-            if (begin > end)
+            lock (this)
             {
-                Buffer.BlockCopy(data, offset, buffer, end, length);
-                end += length;
+                if (length + offset > data.Length)
+                    return false;
+
+                if (length > Size - Count)
+                    return false;
+
+                if (begin > end)
+                {
+                    Buffer.BlockCopy(data, offset, buffer, end, length);
+                    end += length;
+                    return true;
+                }
+
+                int remain = buffer.Length - end;
+                if (length <= remain)
+                {
+                    Buffer.BlockCopy(data, offset, buffer, end, length);
+                    end = (end + length) % buffer.Length;
+                    return true;
+                }
+
+                Buffer.BlockCopy(data, offset, buffer, end, remain);
+                Buffer.BlockCopy(data, remain, buffer, 0, length - remain);
+
+                end = length - remain;
+
                 return true;
             }
-
-            int remain = buffer.Length - end;
-            if (length <= remain)
-            {
-                Buffer.BlockCopy(data, offset, buffer, end, length);
-                end = (end + length) % buffer.Length;
-                return true;
-            }
-
-            Buffer.BlockCopy(data, offset, buffer, end, remain);
-            Buffer.BlockCopy(data, remain, buffer, 0, length - remain);
-
-            end = length - remain;
-
-            return true;          
         }
 
         public void Skip(int count)
         {
-            begin = (begin + count) % buffer.Length;
+            lock (this)
+                begin = (begin + count) % buffer.Length;
         }
 
         public bool TryTake(int count, byte[] data)
         {
-            if (count > Count)
-                return false;
-
-            if (count == 0)
-                return false;
-
-            if (end >= begin)
+            lock (this)
             {
-                Buffer.BlockCopy(buffer, begin, data, 0, count);
-                begin += count;
+                if (count > Count)
+                    return false;
+
+                if (count == 0)
+                    return false;
+
+                if (end >= begin)
+                {
+                    Buffer.BlockCopy(buffer, begin, data, 0, count);
+                    begin += count;
+                    return true;
+                }
+
+                int remain = buffer.Length - begin;
+                if (count <= remain)
+                {
+                    Buffer.BlockCopy(buffer, begin, data, 0, count);
+                    begin = (begin + count) % buffer.Length;
+                    return true;
+                }
+
+                Buffer.BlockCopy(buffer, begin, data, 0, remain);
+                Buffer.BlockCopy(buffer, 0, data, remain, count - remain);
+
+                begin = count - remain;
+
                 return true;
             }
-            
-            int remain = buffer.Length - begin;
-            if (count <= remain)
-            {
-                Buffer.BlockCopy(buffer, begin, data, 0, count);
-                begin = (begin + count) % buffer.Length;
-                return true;
-            }
-
-            Buffer.BlockCopy(buffer, begin, data, 0, remain);
-            Buffer.BlockCopy(buffer, 0, data, remain, count - remain);
-
-            begin = count - remain;
-
-            return true;
         }
 
         public bool TryPeek(int count, byte[] data)
         {
-            if (count > Count)
-                return false;
-
-            if (count == 0)
-                return false;
-
-            if (end >= begin)
+            lock (this)
             {
-                Buffer.BlockCopy(buffer, begin, data, 0, count);
-                return true;
-            }
+                if (count > Count)
+                    return false;
 
-            int remain = buffer.Length - begin;
-            if (count <= remain)
-            {
-                Buffer.BlockCopy(buffer, begin, data, 0, count);
-                return true;
-            }
+                if (count == 0)
+                    return false;
 
-            Buffer.BlockCopy(buffer, begin, data, 0, remain);
-            Buffer.BlockCopy(buffer, 0, data, remain, count - remain);
-            return true;
+                if (end >= begin)
+                {
+                    Buffer.BlockCopy(buffer, begin, data, 0, count);
+                    return true;
+                }
+
+                int remain = buffer.Length - begin;
+                if (count <= remain)
+                {
+                    Buffer.BlockCopy(buffer, begin, data, 0, count);
+                    return true;
+                }
+
+                Buffer.BlockCopy(buffer, begin, data, 0, remain);
+                Buffer.BlockCopy(buffer, 0, data, remain, count - remain);
+                return true;
+
+            }
         }
     }
 }
