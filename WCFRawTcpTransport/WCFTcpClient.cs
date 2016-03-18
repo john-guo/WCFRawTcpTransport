@@ -14,16 +14,10 @@ namespace WCFRawTcpTransport
         private DuplexChannelFactory<IInvokerService> _factory;
         private IInvokerService _service;
 
-        public WCFTcpClient(string uri, IRealEncoder encoder)
+        public WCFTcpClient(string uri, IRealEncoder encoder) : base(encoder)
         {
-            var customBinding = new CustomBinding();
-            if (encoder != null)
-                customBinding.Elements.Add(new InnerEncoderBingdingElement(encoder));
-            customBinding.Elements.Add(new CustomEncodingBindingElement());
-            customBinding.Elements.Add(new CustomTcpBindingElement(_stub));
-
             var address = new EndpointAddress(uri);
-            var endpoint = new ServiceEndpoint(ContractDescription.GetContract(typeof(IInvokerService)), customBinding, address);
+            var endpoint = new ServiceEndpoint(ContractDescription.GetContract(typeof(IInvokerService)), _customBinding, address);
             var behavior = new InvokerServiceEndpointBehavior();
             endpoint.EndpointBehaviors.Add(behavior);
 

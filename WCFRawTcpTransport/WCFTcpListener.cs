@@ -22,18 +22,13 @@ namespace WCFRawTcpTransport
             public IInvokerServiceCallback Callback;
         }
 
-        public WCFTcpListener(string uri, IRealEncoder encoder)
+        public WCFTcpListener(string uri, IRealEncoder encoder) : base(encoder)
         {
             _sessions = new ConcurrentDictionary<string, SessionItem>();
 
             _host = new ServiceHost(_stub);
-            var customBinding = new CustomBinding();
-            if (encoder != null)
-                customBinding.Elements.Add(new InnerEncoderBingdingElement(encoder));
-            customBinding.Elements.Add(new CustomEncodingBindingElement());
-            customBinding.Elements.Add(new CustomTcpBindingElement(_stub));
 
-            var endpoint = _host.AddServiceEndpoint(typeof(IInvokerService), customBinding, uri);
+            var endpoint = _host.AddServiceEndpoint(typeof(IInvokerService), _customBinding, uri);
             var behavior = new InvokerServiceEndpointBehavior();
             endpoint.EndpointBehaviors.Add(behavior);
 

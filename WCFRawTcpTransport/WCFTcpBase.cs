@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel.Channels;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,13 +10,20 @@ namespace WCFRawTcpTransport
     public abstract class WCFTcpBase : IDisposable
     {
         protected InvokerStub _stub;
+        protected CustomBinding _customBinding;
 
-        protected WCFTcpBase()
+        protected WCFTcpBase(IRealEncoder encoder)
         {
             _stub = new InvokerStub();
             _stub.OnInvoke += OnInvoke;
             _stub.Connect += _OnConnect;
             _stub.Disconnect += _OnDisconnect;
+
+            _customBinding = new CustomBinding();
+            if (encoder != null)
+                _customBinding.Elements.Add(new InnerEncoderBingdingElement(encoder));
+            _customBinding.Elements.Add(new CustomEncodingBindingElement());
+            _customBinding.Elements.Add(new CustomTcpBindingElement(_stub));
         }
 
         protected virtual void OnInvoke(string sessionId, byte[] data)
