@@ -43,6 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncResult.cs" />
+    <Compile Include="CustomTcpSessionChannelFactory.cs" />
+    <Compile Include="CustomTcpSessionChannelListener.cs" />
+    <Compile Include="CustomTcpSocketSessionChannel.cs" />
     <Compile Include="DefaultInnerEncoder.cs" />
     <Compile Include="InnerEncoderBingdingElement.cs" />
     <Compile Include="InvokerBehaviorAttribute.cs" />

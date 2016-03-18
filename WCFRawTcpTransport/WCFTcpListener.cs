@@ -13,12 +13,18 @@ namespace WCFRawTcpTransport
     public abstract class WCFTcpListener : WCFTcpBase, IDisposable
     {
         private ServiceHost _host;
-        private IInvokerServiceCallback _callbackChannel;
-        private ConcurrentDictionary<string, ISocketChannel> _sessions;
+        private IInvokerServiceCallback _currentCallback;
+        private ConcurrentDictionary<string, SessionItem> _sessions;
+
+        class SessionItem
+        {
+            public ISocketChannel Session;
+            public IInvokerServiceCallback Callback;
+        }
 
         public WCFTcpListener(string uri, IRealEncoder encoder)
         {
-            _sessions = new ConcurrentDictionary<string, ISocketChannel>();
+            _sessions = new ConcurrentDictionary<string, SessionItem>();
 
             _host = new ServiceHost(_stub);
             var customBinding = new CustomBinding();
@@ -43,25 +49,19 @@ namespace WCFRawTcpTransport
         {
             get
             {
-                return _callbackChannel;
+                return _currentCallback;
             }
         }
 
         protected override void OnInvoke(string sessionId, byte[] data)
         {
-            ISocketChannel session;
-            _sessions.TryGetValue(sessionId, out session);
+            SessionItem item;
+            _sessions.TryGetValue(sessionId, out item);
 
-            //Cannot use the SocketChannel as ServiceChannel to retrive CallbackChannel.
-            //using (var scope = new OperationContextScope(session))
-            //{
-            //    _callbackChannel = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
-            //    OnData(sessionId, data);
-            //}
-
-
-            //BUG: only one client (first connected) can be called back. 
-            _callbackChannel = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
+            //BUG: only one client (first connected) can be called back.
+            if (item.Callback == null)
+                item.Callback = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
+            _currentCallback = item.Callback;
 
 
             OnData(sessionId, data);
@@ -69,7 +69,7 @@ namespace WCFRawTcpTransport
 
         protected override void _OnConnect(ISocketChannel session)
         {
-            _sessions[session.SessionId] = session;
+            _sessions[session.SessionId] = new SessionItem() { Session = session, Callback = null };
 
             base._OnConnect(session);
         }
@@ -78,7 +78,9 @@ namespace WCFRawTcpTransport
         {
             base._OnDisconnect(session);
 
-            _sessions.TryRemove(session.SessionId, out session);
+            SessionItem item;
+
+            _sessions.TryRemove(session.SessionId, out item);
         }
 
         public override void Dispose()

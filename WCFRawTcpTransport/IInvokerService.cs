@@ -13,7 +13,7 @@ using System.IO;
 
 namespace WCFRawTcpTransport
 {
-    [ServiceContract(CallbackContract = typeof(IInvokerServiceCallback), SessionMode = SessionMode.NotAllowed)]
+    [ServiceContract(CallbackContract = typeof(IInvokerServiceCallback))]
     public interface IInvokerService 
     {
         [OperationContract(IsOneWay = true, Action = CustomTransportConstant.Action)]

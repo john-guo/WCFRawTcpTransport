@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace WCFRawTcpTransport
 {
-    class CustomTcpSessionChannelFactory : ChannelFactoryBase<IDuplexSessionChannel>
+    class CustomTcpChannelFactory : ChannelFactoryBase<IDuplexChannel>
     {
         private TcpClient _client;
         private MessageEncoderFactory _factory;
         private BindingContext _context;
         private InvokerStub _stub;
 
-        internal CustomTcpSessionChannelFactory(BindingContext context, MessageEncoderFactory factory, InvokerStub stub)
+        internal CustomTcpChannelFactory(BindingContext context, MessageEncoderFactory factory, InvokerStub stub)
         {
             _context = context;
             _factory = factory;
@@ -28,10 +28,10 @@ namespace WCFRawTcpTransport
             return new CompletedAsyncResult(callback, state);
         }
 
-        protected override IDuplexSessionChannel OnCreateChannel(EndpointAddress address, Uri via)
+        protected override IDuplexChannel OnCreateChannel(EndpointAddress address, Uri via)
         {
             _client = new TcpClient(address.Uri.Host, address.Uri.Port);
-            var channel = new CustomTcpSocketSessionChannel(_client.Client, this, _factory, _context);
+            var channel = new CustomTcpSocketChannel(_client.Client, this, _factory, _context);
             channel.Opened += Channel_Opened;
             channel.Closed += Channel_Closed;
 

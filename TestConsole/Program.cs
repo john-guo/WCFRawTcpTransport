@@ -8,7 +8,7 @@ namespace TestConsole
 {
     class Program
     {
-        const string uri = "tcp://localhost:7777";
+        const string uri = "tcp://127.0.0.1:7777";
 
         static void Main(string[] args)
         {

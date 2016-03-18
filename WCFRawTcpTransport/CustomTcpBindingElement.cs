@@ -14,11 +14,11 @@ namespace WCFRawTcpTransport
 
         internal CustomTcpBindingElement() : this(null)
         {
-
         }
 
         internal CustomTcpBindingElement(InvokerStub stub) : base()
         {
+            UseSession = true;
             _stub = stub;
         }
 
@@ -29,6 +29,8 @@ namespace WCFRawTcpTransport
                 return CustomTransportConstant.Schema;
             }
         }
+
+        public bool UseSession { get; set; }
 
         public override BindingElement Clone()
         {
@@ -44,22 +46,34 @@ namespace WCFRawTcpTransport
         public override IChannelFactory<TChannel> BuildChannelFactory<TChannel>(BindingContext context)
         {
             var factory = getMessageEncoderFactory(context);
+            if (UseSession)
+                return (IChannelFactory<TChannel>)new CustomTcpSessionChannelFactory(context, factory, _stub);
+
             return (IChannelFactory<TChannel>)new CustomTcpChannelFactory(context, factory, _stub);
         }
 
         public override IChannelListener<TChannel> BuildChannelListener<TChannel>(BindingContext context)
         {
             var factory = getMessageEncoderFactory(context);
+            if (UseSession)
+                return (IChannelListener<TChannel>)new CustomTcpSessionChannelListener(context, factory, _stub);
+
             return (IChannelListener<TChannel>)new CustomTcpChannelListener(context, factory, _stub);
         }
 
         public override bool CanBuildChannelFactory<TChannel>(BindingContext context)
         {
+            if (UseSession)
+                return (typeof(TChannel) == typeof(IDuplexSessionChannel));
+
             return (typeof(TChannel) == typeof(IDuplexChannel));
         }
 
         public override bool CanBuildChannelListener<TChannel>(BindingContext context)
         {
+            if (UseSession)
+                return (typeof(TChannel) == typeof(IDuplexSessionChannel));
+
             return (typeof(TChannel) == typeof(IDuplexChannel));
         }
     }
