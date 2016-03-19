@@ -10,6 +10,6 @@ namespace WCFRawTcpTransport
     interface IPoolManager<T> where T : class, new()
     {
         BufferManager Buffer { get; }
-        SimpleObjectPool<T> Pool { get; }
+        IObjectPool<T> Pool { get; }
     }
 }

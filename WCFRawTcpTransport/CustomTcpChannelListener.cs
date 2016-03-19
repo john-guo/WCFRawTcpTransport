@@ -29,7 +29,7 @@ namespace WCFRawTcpTransport
             }
         }
 
-        public SimpleObjectPool<AsyncProxy> Pool
+        public IObjectPool<AsyncProxy> Pool
         {
             get
             {

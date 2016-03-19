@@ -27,7 +27,7 @@ namespace WCFRawTcpTransport
                 return _bufferManager;
             }
         }
-        public SimpleObjectPool<AsyncProxy> Pool
+        public IObjectPool<AsyncProxy> Pool
         {
             get
             {

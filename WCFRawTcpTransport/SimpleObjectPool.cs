@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 
 namespace WCFRawTcpTransport
 {
-    class SimpleObjectPool<T> where T : class, new()
+    class SimpleObjectPool<T> : IObjectPool<T> where T : class, new()
     {
         private ConcurrentBag<T> _pool;
         private bool _allowNew;

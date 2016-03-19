@@ -60,6 +60,7 @@
     <Compile Include="CustomTcpSocketChannel.cs" />
     <Compile Include="InvokerServiceEndpointBehavior.cs" />
     <Compile Include="InvokerStub.cs" />
+    <Compile Include="IObjectPool.cs" />
     <Compile Include="IPoolManager.cs" />
     <Compile Include="ISegementBuffer.cs" />
     <Compile Include="IRealEncoder.cs" />
