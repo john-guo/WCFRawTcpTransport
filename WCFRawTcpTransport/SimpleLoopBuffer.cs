@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WCFRawTcpTransport
@@ -13,11 +15,13 @@ namespace WCFRawTcpTransport
         private int begin;
         private int end;
         private int capacity;
+        private ReaderWriterLockSlim locker;
 
         public SimpleLoopBuffer(int maxSize)
         {
             capacity = maxSize;
             buffer = new byte[maxSize + 1];
+            locker = new ReaderWriterLockSlim();
             Clear();
         }
 
@@ -74,8 +78,9 @@ namespace WCFRawTcpTransport
 
         public void Clear()
         {
-            lock (this)
-                begin = end = 0;
+            locker.EnterWriteLock();
+            begin = end = 0;
+            locker.ExitWriteLock();
         }
 
         public bool TryAdd(byte[] data)
@@ -85,19 +90,24 @@ namespace WCFRawTcpTransport
 
         public bool TryAdd(byte[] data, int offset, int length)
         {
-            lock (this)
+            bool ret = false;
+
+            locker.EnterWriteLock();
+
+            do
             {
                 if (length + offset > data.Length)
-                    return false;
+                    break;
 
                 if (length > Size - Count)
-                    return false;
+                    break;
 
                 if (begin > end)
                 {
                     Buffer.BlockCopy(data, offset, buffer, end, length);
                     end += length;
-                    return true;
+                    ret = true;
+                    break;
                 }
 
                 int remain = buffer.Length - end;
@@ -105,7 +115,8 @@ namespace WCFRawTcpTransport
                 {
                     Buffer.BlockCopy(data, offset, buffer, end, length);
                     end = (end + length) % buffer.Length;
-                    return true;
+                    ret = true;
+                    break;
                 }
 
                 Buffer.BlockCopy(data, offset, buffer, end, remain);
@@ -113,31 +124,43 @@ namespace WCFRawTcpTransport
 
                 end = length - remain;
 
-                return true;
-            }
+                ret = true;
+
+            } while (false);
+
+            locker.ExitWriteLock();
+
+            return ret;
         }
 
         public void Skip(int count)
         {
-            lock (this)
+            locker.EnterWriteLock();
+            if (!IsEmpty)
                 begin = (begin + count) % buffer.Length;
+            locker.ExitWriteLock();
         }
 
         public bool TryTake(int count, byte[] data)
         {
-            lock (this)
+            bool ret = false;
+
+            locker.EnterReadLock();
+
+            do
             {
                 if (count > Count)
-                    return false;
+                    break;
 
                 if (count == 0)
-                    return false;
+                    break;
 
                 if (end >= begin)
                 {
                     Buffer.BlockCopy(buffer, begin, data, 0, count);
                     begin += count;
-                    return true;
+                    ret = true;
+                    break;
                 }
 
                 int remain = buffer.Length - begin;
@@ -145,7 +168,8 @@ namespace WCFRawTcpTransport
                 {
                     Buffer.BlockCopy(buffer, begin, data, 0, count);
                     begin = (begin + count) % buffer.Length;
-                    return true;
+                    ret = true;
+                    break;
                 }
 
                 Buffer.BlockCopy(buffer, begin, data, 0, remain);
@@ -153,38 +177,53 @@ namespace WCFRawTcpTransport
 
                 begin = count - remain;
 
-                return true;
-            }
+                ret = true;
+            } while (false);
+
+            locker.ExitReadLock();
+
+            return ret;
         }
 
         public bool TryPeek(int count, byte[] data)
         {
-            lock (this)
+            bool ret = false;
+
+            locker.EnterReadLock();
+
+            do
             {
                 if (count > Count)
-                    return false;
+                    break;
 
                 if (count == 0)
-                    return false;
+                    break;
 
                 if (end >= begin)
                 {
                     Buffer.BlockCopy(buffer, begin, data, 0, count);
-                    return true;
+                    ret = true;
+                    break;
                 }
 
                 int remain = buffer.Length - begin;
                 if (count <= remain)
                 {
                     Buffer.BlockCopy(buffer, begin, data, 0, count);
-                    return true;
+                    ret = true;
+                    break;
                 }
 
                 Buffer.BlockCopy(buffer, begin, data, 0, remain);
                 Buffer.BlockCopy(buffer, 0, data, remain, count - remain);
-                return true;
+                ret = true;
 
-            }
+            } while (false);
+
+            locker.ExitReadLock();
+
+            return ret;
         }
+
     }
 }

@@ -22,7 +22,7 @@ namespace WCFRawTcpTransport
         {
             _encodeFactory = factory;
             _encoder = encoder;
-            _receiveBuffer = new SimpleLoopBuffer(CustomTransportConstant.MaxBufferSize);
+            _receiveBuffer = new SimpleLoopBuffer(CustomTransportConstant.MaxBufferSize * CustomTransportConstant.MaxBufferPoolSize);
         }
 
         public virtual IRealEncoder InnerEncoder

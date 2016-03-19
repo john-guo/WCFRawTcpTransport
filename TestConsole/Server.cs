@@ -18,6 +18,8 @@ namespace TestConsole
         {
             Console.WriteLine(BitConverter.ToString(data));
 
+            GC.Collect();
+
             Callback(data);
         }
 

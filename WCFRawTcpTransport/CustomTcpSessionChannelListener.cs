@@ -10,13 +10,30 @@ using System.ServiceModel;
 
 namespace WCFRawTcpTransport
 {
-    class CustomTcpSessionChannelListener : ChannelListenerBase<IDuplexSessionChannel>
+    class CustomTcpSessionChannelListener : ChannelListenerBase<IDuplexSessionChannel>, IPoolManager<AsyncProxy>
     {
         private Uri _uri;
         private TcpListener _listener;
         private MessageEncoderFactory _factory;
         private BindingContext _context;
         private InvokerStub _stub;
+
+        private BufferManager _bufferManager;
+        private SimpleObjectPool<AsyncProxy> _asyncPool;
+        public BufferManager Buffer
+        {
+            get
+            {
+                return _bufferManager;
+            }
+        }
+        public SimpleObjectPool<AsyncProxy> Pool
+        {
+            get
+            {
+                return _asyncPool;
+            }
+        }
 
         internal CustomTcpSessionChannelListener(BindingContext context, MessageEncoderFactory factory, InvokerStub stub)
             : base(context.Binding)
@@ -25,6 +42,9 @@ namespace WCFRawTcpTransport
             _factory = factory;
             _uri = context.ListenUriBaseAddress;
             _stub = stub;
+
+            _asyncPool = new SimpleObjectPool<AsyncProxy>(CustomTransportConstant.MaxObjectPoolSize, true);
+            _bufferManager = BufferManager.CreateBufferManager(CustomTransportConstant.MaxBufferPoolSize, CustomTransportConstant.MaxBufferSize);
         }
 
         private void StartListen()

@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncProxy.cs" />
     <Compile Include="AsyncResult.cs" />
     <Compile Include="CustomTcpChannelFactory.cs" />
     <Compile Include="CustomTcpChannelListener.cs" />
@@ -59,10 +60,12 @@
     <Compile Include="CustomTcpSocketChannel.cs" />
     <Compile Include="InvokerServiceEndpointBehavior.cs" />
     <Compile Include="InvokerStub.cs" />
+    <Compile Include="IPoolManager.cs" />
     <Compile Include="ISegementBuffer.cs" />
     <Compile Include="IRealEncoder.cs" />
     <Compile Include="IInvokerService.cs" />
     <Compile Include="ISocketChannel.cs" />
+    <Compile Include="SimpleObjectPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleLoopBuffer.cs" />
     <Compile Include="WCFTcpBase.cs" />

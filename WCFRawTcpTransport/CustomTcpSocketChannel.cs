@@ -12,7 +12,7 @@ using System.Xml;
 
 namespace WCFRawTcpTransport
 {
-    class CustomTcpSocketChannel : ChannelBase, IDuplexChannel, ISocketChannel
+    class CustomTcpSocketChannel : ChannelBase, IDuplexChannel, ISocketChannel, IAsyncProxyChannel
     {
         private Socket _socket;
         private MessageEncoderFactory _factory;
@@ -21,12 +21,14 @@ namespace WCFRawTcpTransport
         private BindingContext _context;
         private ConcurrentQueue<Message> _msgQueue;
         private MessageEncoder _encoder;
-        internal BufferManager _bufferManager;
-        internal ConcurrentQueue<ArraySegment<byte>> _queue;
+        private ConcurrentQueue<ArraySegment<byte>> _queue;
 
         internal CustomTcpSocketChannel(Socket socket, ChannelManagerBase channelManager, MessageEncoderFactory factory, BindingContext context)
             : base(channelManager)
         {
+            if (PoolManager == null)
+                throw new NotSupportedException();
+
             _socket = socket;
             _socket.SendTimeout = Convert.ToInt32(DefaultSendTimeout.TotalMilliseconds);
             _socket.ReceiveTimeout = Convert.ToInt32(DefaultReceiveTimeout.TotalMilliseconds);
@@ -38,9 +40,18 @@ namespace WCFRawTcpTransport
             _local = getEndpointAddress(_socket.LocalEndPoint);
             _remote = getEndpointAddress(_socket.RemoteEndPoint);
 
-            _bufferManager = BufferManager.CreateBufferManager(CustomTransportConstant.MaxBufferPoolSize, CustomTransportConstant.MaxBufferSize);
             _queue = new ConcurrentQueue<ArraySegment<byte>>();
             _msgQueue = new ConcurrentQueue<Message>();
+        }
+
+        public ConcurrentQueue<ArraySegment<byte>> ReceviedBufferQueue
+        {
+            get { return _queue; }
+        }
+
+        public IPoolManager<AsyncProxy> PoolManager
+        {
+            get { return Manager as IPoolManager<AsyncProxy>; }
         }
 
         private EndpointAddress getEndpointAddress(EndPoint ep)
@@ -130,61 +141,6 @@ namespace WCFRawTcpTransport
             }
         }
 
-        class AsyncStateItem
-        {
-            public object State { get; set; }
-            public AsyncCallback Callback { get; set; }
-            public byte[] Buffer { get; set; }
-            public int Count { get; set; }
-            public int Offset { get; set; }
-            public CustomTcpSocketChannel Channel;
-
-            public AsyncStateItem(CustomTcpSocketChannel channel)
-            {
-                Channel = channel;
-            }
-
-            public void ReceiveCallback(IAsyncResult ar)
-            {
-                try
-                {
-                    int size = Channel.Socket.EndReceive(ar);
-
-                    Channel._queue.Enqueue(new ArraySegment<byte>(Buffer, 0, size));
-
-                    Callback(ar);
-                }
-                catch (Exception ex)
-                {
-                    Channel.Close();
-                }
-            }
-
-            public void SendCallback(IAsyncResult ar)
-            {
-                try
-                {
-                    int size = Channel.Socket.EndSend(ar);
-
-                    if (size < Count)
-                    {
-                        Offset += size;
-                        Count -= size;
-
-                        Channel.Socket.BeginSend(Buffer, Offset, Count, SocketFlags.None, SendCallback, State);
-                    }
-                    else
-                    {
-                        Channel._bufferManager.ReturnBuffer(Buffer);
-                        Callback(ar);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Channel.Close();
-                }
-            }
-        }
 
 
         private Message AssemblyMessage(Message message)
@@ -205,14 +161,14 @@ namespace WCFRawTcpTransport
 
         public IAsyncResult BeginReceive(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            var buffer = _bufferManager.TakeBuffer(CustomTransportConstant.MaxBufferSize);
+            var buffer = PoolManager.Buffer.TakeBuffer(CustomTransportConstant.MaxBufferSize);
 
-            var asyncItem = new AsyncStateItem(this)
-            {
-                Buffer = buffer,
-                State = state,
-                Callback = callback
-            };
+            var asyncItem = PoolManager.Pool.Take();
+            asyncItem.Channel = this;
+            asyncItem.Buffer = buffer;
+            asyncItem.State = state;
+            asyncItem.Callback = callback;
+
             return _socket.BeginReceive(buffer, 0, CustomTransportConstant.MaxBufferSize, SocketFlags.None, asyncItem.ReceiveCallback, state);
         }
 
@@ -224,18 +180,17 @@ namespace WCFRawTcpTransport
         public IAsyncResult BeginSend(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
             message = DisassemblyMessage(message);
-            var buffer = _encoder.WriteMessage(message, int.MaxValue, _bufferManager, 0);
+            var buffer = _encoder.WriteMessage(message, int.MaxValue, PoolManager.Buffer, 0);
             int offset = buffer.Offset;
             int count = buffer.Count;
 
-            var asyncItem = new AsyncStateItem(this)
-            {
-                Buffer = buffer.Array,
-                State = state,
-                Callback = callback,
-                Offset = offset,
-                Count = count
-            };
+            var asyncItem = PoolManager.Pool.Take();
+            asyncItem.Channel = this;
+            asyncItem.Buffer = buffer.Array;
+            asyncItem.State = state;
+            asyncItem.Callback = callback;
+            asyncItem.Offset = offset;
+            asyncItem.Count = count;
 
             return _socket.BeginSend(buffer.Array, offset, count, SocketFlags.None, asyncItem.SendCallback, state);
         }
@@ -263,7 +218,7 @@ namespace WCFRawTcpTransport
             {
                 _socket.EndSend(result);
             }
-            catch (Exception ex)
+            catch
             {
                 Close();
             }
@@ -280,7 +235,7 @@ namespace WCFRawTcpTransport
 
             _queue.TryDequeue(out item);
 
-            message = _encoder.ReadMessage(item, _bufferManager);
+            message = _encoder.ReadMessage(item, PoolManager.Buffer);
 
             if (message == null)
                 return false;
@@ -322,7 +277,7 @@ namespace WCFRawTcpTransport
             try
             {
                 message = DisassemblyMessage(message);
-                var data = _encoder.WriteMessage(message, int.MaxValue, _bufferManager);
+                var data = _encoder.WriteMessage(message, int.MaxValue, PoolManager.Buffer);
                 int count = data.Count;
                 int offset = data.Offset;
                 do
@@ -332,7 +287,7 @@ namespace WCFRawTcpTransport
                     offset += size;
                 } while (count > 0);
             }
-            catch (Exception ex)
+            catch
             {
                 Close();
             }
@@ -344,9 +299,9 @@ namespace WCFRawTcpTransport
             if (_msgQueue.TryDequeue(out message))
                 return true;
 
-            var buffer = _bufferManager.TakeBuffer(CustomTransportConstant.MaxBufferSize);
+            var buffer = PoolManager.Buffer.TakeBuffer(CustomTransportConstant.MaxBufferSize);
             int size = _socket.Receive(buffer);
-            message = _encoder.ReadMessage(new ArraySegment<byte>(buffer, 0, size), _bufferManager);
+            message = _encoder.ReadMessage(new ArraySegment<byte>(buffer, 0, size), PoolManager.Buffer);
 
             if (message == null)
                 return false;

@@ -9,18 +9,40 @@ using System.Threading.Tasks;
 
 namespace WCFRawTcpTransport
 {
-    class CustomTcpSessionChannelFactory : ChannelFactoryBase<IDuplexSessionChannel>
+    class CustomTcpSessionChannelFactory : ChannelFactoryBase<IDuplexSessionChannel>, IPoolManager<AsyncProxy>
     {
         private TcpClient _client;
         private MessageEncoderFactory _factory;
         private BindingContext _context;
         private InvokerStub _stub;
 
+        private BufferManager _bufferManager;
+        private SimpleObjectPool<AsyncProxy> _asyncPool;
+
+        public BufferManager Buffer
+        {
+            get
+            {
+                return _bufferManager;
+            }
+        }
+
+        public SimpleObjectPool<AsyncProxy> Pool
+        {
+            get
+            {
+                return _asyncPool;
+            }
+        }
+
         internal CustomTcpSessionChannelFactory(BindingContext context, MessageEncoderFactory factory, InvokerStub stub)
         {
             _context = context;
             _factory = factory;
             _stub = stub;
+
+            _asyncPool = new SimpleObjectPool<AsyncProxy>(CustomTransportConstant.MaxObjectPoolSize, true);
+            _bufferManager = BufferManager.CreateBufferManager(CustomTransportConstant.MaxBufferPoolSize, CustomTransportConstant.MaxBufferSize);
         }
 
         protected override IAsyncResult OnBeginOpen(TimeSpan timeout, AsyncCallback callback, object state)
