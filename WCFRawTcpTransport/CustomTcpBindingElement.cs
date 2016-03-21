@@ -34,7 +34,7 @@ namespace WCFRawTcpTransport
 
         public override BindingElement Clone()
         {
-            return new CustomTcpBindingElement(_stub);
+            return new CustomTcpBindingElement(_stub) { UseSession = UseSession };
         }
 
         private MessageEncoderFactory getMessageEncoderFactory(BindingContext context)
