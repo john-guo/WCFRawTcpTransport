@@ -30,6 +30,7 @@ namespace WCFRawTcpTransport
                 throw new NotSupportedException();
 
             _socket = socket;
+            _socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
             _socket.SendTimeout = Convert.ToInt32(DefaultSendTimeout.TotalMilliseconds);
             _socket.ReceiveTimeout = Convert.ToInt32(DefaultReceiveTimeout.TotalMilliseconds);
 
