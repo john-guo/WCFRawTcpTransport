@@ -23,10 +23,10 @@ namespace WCFRawTcpTransport
             if (encoder != null)
                 _customBinding.Elements.Add(new InnerEncoderBingdingElement(encoder));
             _customBinding.Elements.Add(new CustomEncodingBindingElement());
-            _customBinding.Elements.Add(new CustomTcpBindingElement(_stub));
 
             // Here is a bug if use IDuplexChannel that server only callback to first connected client even more clients connected.
             //_customBinding.Elements.Add(new CustomTcpBindingElement(_stub) { UseSession = false });
+            _customBinding.Elements.Add(new CustomTcpBindingElement(_stub));
         }
 
         protected virtual void OnInvoke(string sessionId, byte[] data)
