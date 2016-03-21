@@ -14,12 +14,12 @@ namespace WCFRawTcpTest_libss
         enum HandShakeState { First, Second, Final }
         private ConcurrentDictionary<string, ProxyClient> proxies;
         private ConcurrentDictionary<string, HandShakeState> states;
+        private ConcurrentDictionary<string, byte[]> extraHeaders;
         private IEncryptor encryptor;
         private string remote;
         private const int BufferSize = CustomTransportConstant.MaxBufferSize * 2;
         private byte[] encryptBuffer = new byte[BufferSize];
         private byte[] decryptBuffer = new byte[BufferSize];
-        private byte[] extraHeader;
 
 
         private static string MakeUri(string address, int port)
@@ -42,6 +42,7 @@ namespace WCFRawTcpTest_libss
             proxies = new ConcurrentDictionary<string, ProxyClient>();
             encryptor = EncryptorFactory.GetEncryptor(method, password);
             states = new ConcurrentDictionary<string, HandShakeState>();
+            extraHeaders = new ConcurrentDictionary<string, byte[]>();
         }
 
         protected override void OnConnect(ISocketChannel session)
@@ -119,8 +120,9 @@ namespace WCFRawTcpTest_libss
             }
             if (data.Length > 3)
             {
-                extraHeader = new byte[data.Length - 3];
+                var extraHeader = new byte[data.Length - 3];
                 Array.Copy(data, 3, extraHeader, 0, data.Length - 3);
+                extraHeaders[sessionId] = extraHeader;
             }            
 
             var command = data[1];
@@ -146,12 +148,12 @@ namespace WCFRawTcpTest_libss
             lock (encryptBuffer)
             {
                 buffer2 = data;
-                if (extraHeader != null)
+                byte[] extraHeader;
+                if (extraHeaders.TryRemove(sessionId, out extraHeader))
                 {
                     buffer2 = new byte[extraHeader.Length + data.Length];
                     Array.Copy(extraHeader, buffer2, extraHeader.Length);
                     Array.Copy(data, 0, buffer2, extraHeader.Length, data.Length);
-                    extraHeader = null;
                 }
                 encryptor.Encrypt(buffer2, buffer2.Length, encryptBuffer, out size);
                 buffer1 = Truncate(encryptBuffer, size);
