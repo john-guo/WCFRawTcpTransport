@@ -9,10 +9,9 @@ using System.Threading.Tasks;
 
 namespace WCFRawTcpTransport
 {
-    interface IAsyncProxyChannel : IChannel
+    interface IAsyncProxyChannel : ISocketChannel
     {
         IPoolManager<AsyncProxy> PoolManager { get; }
-        Socket Socket { get; }
         ConcurrentQueue<ArraySegment<byte>> ReceviedBufferQueue { get; }
     }
 
