@@ -216,5 +216,11 @@ namespace WCFRawTcpTest_libss
         {
             CloseSession(sessionId);            
         }
+
+        public override void Close()
+        {
+            base.Close();
+            encryptor.Dispose();
+        }
     }
 }
