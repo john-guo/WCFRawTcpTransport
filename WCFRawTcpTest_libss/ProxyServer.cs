@@ -45,12 +45,6 @@ namespace WCFRawTcpTest_libss
             extraHeaders = new ConcurrentDictionary<string, byte[]>();
         }
 
-        public void SetRemoteServer(string remoteUri, string method, string password)
-        {
-            remote = remoteUri;
-            
-        }
-
         protected override void OnConnect(ISocketChannel session)
         {
             states[session.SessionId] = HandShakeState.First;
