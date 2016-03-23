@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace WCFRawTcpTransport
 {
-    public abstract class WCFTcpClient : WCFTcpBase, IDisposable
+    public abstract class WCFTcpClient : WCFTcpBase
     {
         private DuplexChannelFactory<IInvokerService> _factory;
         private IInvokerService _service;
