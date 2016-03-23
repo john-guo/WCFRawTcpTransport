@@ -11,6 +11,7 @@ namespace WCFRawTcpTest_libss
     {
         private string sid;
         public event Action<string, byte[]> DataReceived = delegate { };
+        public event Action<string> Closed = delegate { };
 
 
         public ProxyClient(string uri, string sessionId) : base(uri)
@@ -29,6 +30,7 @@ namespace WCFRawTcpTest_libss
 
         protected override void OnDisconnect(ISocketChannel session)
         {
+            Closed(SessionId);
         }
 
         public override void Invoke(byte[] data)

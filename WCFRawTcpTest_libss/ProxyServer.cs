@@ -45,6 +45,12 @@ namespace WCFRawTcpTest_libss
             extraHeaders = new ConcurrentDictionary<string, byte[]>();
         }
 
+        public void SetRemoteServer(string remoteUri, string method, string password)
+        {
+            remote = remoteUri;
+            
+        }
+
         protected override void OnConnect(ISocketChannel session)
         {
             states[session.SessionId] = HandShakeState.First;
@@ -76,6 +82,7 @@ namespace WCFRawTcpTest_libss
 
         protected override void OnDisconnect(ISocketChannel session)
         {
+            CloseSession(session.SessionId, false, true);
         }
 
         private void Handshake(string sessionId, byte[] data)
@@ -100,6 +107,7 @@ namespace WCFRawTcpTest_libss
         {
             var client = new ProxyClient(remote, sessionId);
             client.DataReceived += Proxy_DataReceived;
+            client.Closed += Proxy_Closed;
             proxies.TryAdd(sessionId, client);
             return client;
         }
@@ -171,6 +179,31 @@ namespace WCFRawTcpTest_libss
             return data;
         }
 
+        private void CloseSession(string sessionId, bool needCloseLocal = true, bool needCloseRemote = false)
+        {
+            ProxyClient proxy = null;
+            if (proxies.TryRemove(sessionId, out proxy))
+            {
+                if (needCloseRemote)
+                    proxy.Close();
+            }
+
+            HandShakeState state;
+            states.TryRemove(sessionId, out state);
+
+            byte[] extraHead;
+            extraHeaders.TryRemove(sessionId, out extraHead);
+
+            if (!needCloseLocal)
+                return;
+
+            var item = GetSessionItem(sessionId);
+            if (item == null)
+                return;
+            item.Session.Close();
+        }
+
+
         private void Proxy_DataReceived(string sessionId, byte[] data)
         {
             int size;
@@ -183,6 +216,11 @@ namespace WCFRawTcpTest_libss
             }
 
             Callback(sessionId, buffer);
+        }
+
+        private void Proxy_Closed(string sessionId)
+        {
+            CloseSession(sessionId);            
         }
     }
 }
