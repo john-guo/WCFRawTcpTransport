@@ -170,7 +170,15 @@ namespace WCFRawTcpTransport
             asyncItem.State = state;
             asyncItem.Callback = callback;
 
-            return _socket.BeginReceive(buffer, 0, CustomTransportConstant.MaxBufferSize, SocketFlags.None, asyncItem.ReceiveCallback, state);
+            try
+            {
+                return _socket.BeginReceive(buffer, 0, CustomTransportConstant.MaxBufferSize, SocketFlags.None, asyncItem.ReceiveCallback, state);
+            }
+            catch
+            {
+                Close();
+                return null;
+            }
         }
 
         public IAsyncResult BeginSend(Message message, AsyncCallback callback, object state)
@@ -193,7 +201,15 @@ namespace WCFRawTcpTransport
             asyncItem.Offset = offset;
             asyncItem.Count = count;
 
-            return _socket.BeginSend(buffer.Array, offset, count, SocketFlags.None, asyncItem.SendCallback, state);
+            try
+            {
+                return _socket.BeginSend(buffer.Array, offset, count, SocketFlags.None, asyncItem.SendCallback, state);
+            }
+            catch
+            {
+                Close();
+                return null;
+            }
         }
 
         public IAsyncResult BeginTryReceive(TimeSpan timeout, AsyncCallback callback, object state)
@@ -300,9 +316,17 @@ namespace WCFRawTcpTransport
             if (_msgQueue.TryDequeue(out message))
                 return true;
 
-            var buffer = PoolManager.Buffer.TakeBuffer(CustomTransportConstant.MaxBufferSize);
-            int size = _socket.Receive(buffer);
-            message = _encoder.ReadMessage(new ArraySegment<byte>(buffer, 0, size), PoolManager.Buffer);
+            try
+            {
+                var buffer = PoolManager.Buffer.TakeBuffer(CustomTransportConstant.MaxBufferSize);
+                int size = _socket.Receive(buffer);
+                message = _encoder.ReadMessage(new ArraySegment<byte>(buffer, 0, size), PoolManager.Buffer);
+            }
+            catch
+            {
+                Close();
+                return false;
+            }
 
             if (message == null)
                 return false;

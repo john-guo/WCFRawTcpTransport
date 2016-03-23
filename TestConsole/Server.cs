@@ -17,9 +17,6 @@ namespace TestConsole
         protected override void OnData(string sessionId, byte[] data)
         {
             Console.WriteLine(BitConverter.ToString(data));
-
-            GC.Collect();
-
             Callback(data);
         }
 

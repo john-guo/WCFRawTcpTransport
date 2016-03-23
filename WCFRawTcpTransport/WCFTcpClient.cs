@@ -42,6 +42,7 @@ namespace WCFRawTcpTransport
         public override void Open()
         {
             _service = _factory.CreateChannel();
+            (_service as IChannel).Open();
         }
 
         public override void Close()
