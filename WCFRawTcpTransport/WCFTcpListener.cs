@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 
 namespace WCFRawTcpTransport
 {
-    public abstract class WCFTcpListener : WCFTcpBase, IDisposable
+    public abstract class WCFTcpListener : WCFTcpBase
     {
         private ServiceHost _host;
         private IInvokerServiceCallback _currentCallback;
