@@ -148,36 +148,33 @@ namespace Shadowsocks.Encryption
                 _disposed = true;
             }
 
-            if (disposing)
+            if (_encryptCtx != IntPtr.Zero)
             {
-                if (_encryptCtx != IntPtr.Zero)
+                switch (_cipher)
                 {
-                    switch (_cipher)
-                    {
-                        case CIPHER_AES:
-                            PolarSSL.aes_free(_encryptCtx);
-                            break;
-                        case CIPHER_RC4:
-                            PolarSSL.arc4_free(_encryptCtx);
-                            break;
-                    }
-                    Marshal.FreeHGlobal(_encryptCtx);
-                    _encryptCtx = IntPtr.Zero;
+                    case CIPHER_AES:
+                        PolarSSL.aes_free(_encryptCtx);
+                        break;
+                    case CIPHER_RC4:
+                        PolarSSL.arc4_free(_encryptCtx);
+                        break;
                 }
-                if (_decryptCtx != IntPtr.Zero)
+                Marshal.FreeHGlobal(_encryptCtx);
+                _encryptCtx = IntPtr.Zero;
+            }
+            if (_decryptCtx != IntPtr.Zero)
+            {
+                switch (_cipher)
                 {
-                    switch (_cipher)
-                    {
-                        case CIPHER_AES:
-                            PolarSSL.aes_free(_decryptCtx);
-                            break;
-                        case CIPHER_RC4:
-                            PolarSSL.arc4_free(_decryptCtx);
-                            break;
-                    }
-                    Marshal.FreeHGlobal(_decryptCtx);
-                    _decryptCtx = IntPtr.Zero;
+                    case CIPHER_AES:
+                        PolarSSL.aes_free(_decryptCtx);
+                        break;
+                    case CIPHER_RC4:
+                        PolarSSL.arc4_free(_decryptCtx);
+                        break;
                 }
+                Marshal.FreeHGlobal(_decryptCtx);
+                _decryptCtx = IntPtr.Zero;
             }
         }
         #endregion
