@@ -28,6 +28,7 @@ namespace TestConsole
                 var server = new Server(uri);
                 server.Open();
                 Console.ReadLine();
+                server.Close();
             }
 
         }

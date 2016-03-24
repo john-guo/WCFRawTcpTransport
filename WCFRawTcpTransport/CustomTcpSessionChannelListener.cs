@@ -68,6 +68,7 @@ namespace WCFRawTcpTransport
                 }
 
                 _listener = new TcpListener(address, _uri.Port);
+                _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 _listener.Start();
             }
             catch (Exception ex)
@@ -98,8 +99,7 @@ namespace WCFRawTcpTransport
 
         protected override void OnAbort()
         {
-            _listener.Stop();
-            _listener = null;
+            StopListen();
         }
 
         private CustomTcpSocketSessionChannel newChannel(Socket socket)
@@ -126,12 +126,32 @@ namespace WCFRawTcpTransport
 
         protected override IDuplexSessionChannel OnAcceptChannel(TimeSpan timeout)
         {
-            return newChannel(_listener.AcceptSocket());
+            if (_listener == null)
+                return null;
+
+            try
+            {
+                return newChannel(_listener.AcceptSocket());
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         protected override IAsyncResult OnBeginAcceptChannel(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return _listener.BeginAcceptSocket(callback, state);
+            if (_listener == null)
+                return null;
+
+            try
+            {
+                return _listener.BeginAcceptSocket(callback, state);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         protected override IAsyncResult OnBeginClose(TimeSpan timeout, AsyncCallback callback, object state)
@@ -148,6 +168,9 @@ namespace WCFRawTcpTransport
 
         protected override IAsyncResult OnBeginWaitForChannel(TimeSpan timeout, AsyncCallback callback, object state)
         {
+            if (_listener == null)
+                return null;
+
             return new CompletedAsyncResult(callback, state);
         }
 
@@ -158,7 +181,17 @@ namespace WCFRawTcpTransport
 
         protected override IDuplexSessionChannel OnEndAcceptChannel(IAsyncResult result)
         {
-            return newChannel(_listener.EndAcceptSocket(result));
+            if (_listener == null)
+                return null;
+
+            try
+            {
+                return newChannel(_listener.EndAcceptSocket(result));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         protected override void OnEndClose(IAsyncResult result)
@@ -173,8 +206,18 @@ namespace WCFRawTcpTransport
 
         protected override bool OnEndWaitForChannel(IAsyncResult result)
         {
-            CompletedAsyncResult.End(result);
-            return _listener.Pending();
+            if (_listener == null)
+                return false;
+            try
+            {
+                CompletedAsyncResult.End(result);
+                return _listener.Pending();
+            }
+            catch
+            {
+                return false;
+            }
+
         }
 
         protected override void OnOpen(TimeSpan timeout)
@@ -184,7 +227,17 @@ namespace WCFRawTcpTransport
 
         protected override bool OnWaitForChannel(TimeSpan timeout)
         {
-            return _listener.Pending();
+            if (_listener == null)
+                return false;
+
+            try
+            {
+                return _listener.Pending();
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

@@ -15,7 +15,10 @@ namespace WCFRawTcpTransport
             var count = buffer.Count;
             var item = bufferManager.TakeBuffer(count);
             if (!buffer.TryTake(count, item))
-                throw new OutOfMemoryException();
+            {
+                data = new ArraySegment<byte>();
+                return false;
+            }
 
             data = new ArraySegment<byte>(item, 0, count);
             return true;

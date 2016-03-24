@@ -42,23 +42,33 @@ namespace WCFRawTcpTransport
         {
             SessionItem item;
             if (!_sessions.TryGetValue(sessionId, out item))
-                throw new InvalidOperationException();
+                return null;
 
             return item;
         }
 
         protected virtual void Callback(string sessionId, byte[] data)
         {
-            var item = GetSessionItem(sessionId);
-            if (item.Callback == null)
-                throw new InvalidOperationException();
+            try
+            {
+                var item = GetSessionItem(sessionId);
+                if (item.Callback == null)
+                    throw new InvalidOperationException();
 
-            item.Callback.Invoke(sessionId, data);
+
+                item.Callback.Invoke(sessionId, data);
+            }
+            catch
+            { }
         }
 
         protected virtual void Callback(byte[] data)
         {
-            _currentCallback.Invoke(string.Empty, data);
+            try
+            {
+                _currentCallback.Invoke(string.Empty, data);
+            }
+            catch { }
         }
 
         protected virtual void Close(string sessionId)
@@ -101,7 +111,12 @@ namespace WCFRawTcpTransport
 
         public override void Close()
         {
-            _host.Close();
+            foreach (var sessionId in _sessions.Keys)
+            {
+                Close(sessionId);
+            }
+
+            _host.Close(TimeSpan.Zero);
         }
     }
 }

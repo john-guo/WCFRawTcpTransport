@@ -21,6 +21,7 @@ namespace WCFRawTcpTest_libss
         private byte[] encryptBuffer = new byte[BufferSize];
         private byte[] decryptBuffer = new byte[BufferSize];
 
+        public event Action ProxyBreak = delegate { };
 
         private static string MakeUri(string address, int port)
         {
@@ -99,11 +100,20 @@ namespace WCFRawTcpTest_libss
 
         private ProxyClient NewProxy(string sessionId)
         {
-            var client = new ProxyClient(remote, sessionId);
-            client.DataReceived += Proxy_DataReceived;
-            client.Closed += Proxy_Closed;
-            proxies.TryAdd(sessionId, client);
-            return client;
+            try
+            {
+                var client = new ProxyClient(remote, sessionId);
+                client.DataReceived += Proxy_DataReceived;
+                client.Closed += Proxy_Closed;
+                client.Open();
+                proxies.TryAdd(sessionId, client);
+                return client;
+            }
+            catch
+            {
+                ProxyBreak();
+                return null;
+            }
         }
 
         private ProxyClient GetProxy(string sessionId)
@@ -130,8 +140,7 @@ namespace WCFRawTcpTest_libss
             var command = data[1];
             if (command == 1)
             {
-                var proxy = NewProxy(sessionId);
-                proxy.Open();
+                NewProxy(sessionId);
 
                 byte[] response = { 5, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
                 Callback(response);
@@ -147,6 +156,14 @@ namespace WCFRawTcpTest_libss
             int size;
             byte[] buffer1, buffer2;
 
+            var proxy = GetProxy(sessionId);
+            if (proxy == null)
+            {
+                CloseSession(sessionId);
+                return;
+            }
+
+
             lock (encryptBuffer)
             {
                 buffer2 = data;
@@ -161,7 +178,6 @@ namespace WCFRawTcpTest_libss
                 buffer1 = Truncate(encryptBuffer, size);
             }
 
-            var proxy = GetProxy(sessionId);
             proxy.Invoke(buffer1);
         }
 
@@ -214,11 +230,17 @@ namespace WCFRawTcpTest_libss
 
         private void Proxy_Closed(string sessionId)
         {
-            CloseSession(sessionId);            
+            CloseSession(sessionId);
+            ProxyBreak();
         }
 
         public override void Close()
         {
+            foreach (var sessionId in proxies.Keys)
+            {
+                CloseSession(sessionId, false, true);
+            }
+
             base.Close();
             encryptor.Dispose();
         }
