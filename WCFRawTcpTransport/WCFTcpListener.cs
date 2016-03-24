@@ -38,7 +38,7 @@ namespace WCFRawTcpTransport
 
         }
 
-        protected SessionItem GetSessionItem(string sessionId)
+        protected virtual SessionItem GetSessionItem(string sessionId)
         {
             SessionItem item;
             if (!_sessions.TryGetValue(sessionId, out item))
@@ -47,7 +47,7 @@ namespace WCFRawTcpTransport
             return item;
         }
 
-        protected void Callback(string sessionId, byte[] data)
+        protected virtual void Callback(string sessionId, byte[] data)
         {
             var item = GetSessionItem(sessionId);
             if (item.Callback == null)
@@ -56,9 +56,15 @@ namespace WCFRawTcpTransport
             item.Callback.Invoke(sessionId, data);
         }
 
-        protected void Callback(byte[] data)
+        protected virtual void Callback(byte[] data)
         {
             _currentCallback.Invoke(string.Empty, data);
+        }
+
+        protected virtual void Close(string sessionId)
+        {
+            var item = GetSessionItem(sessionId);
+            item.Session.Close();
         }
 
         protected override void OnInvoke(string sessionId, byte[] data)

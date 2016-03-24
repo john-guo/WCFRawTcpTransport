@@ -30,6 +30,7 @@ namespace WCFRawTcpTransport
                 throw new NotSupportedException();
 
             _socket = socket;
+            _socket.LingerState = new LingerOption(false, 0);
             _socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
             _socket.SendTimeout = Convert.ToInt32(DefaultSendTimeout.TotalMilliseconds);
             _socket.ReceiveTimeout = Convert.ToInt32(DefaultReceiveTimeout.TotalMilliseconds);
@@ -341,15 +342,22 @@ namespace WCFRawTcpTransport
             return !_msgQueue.IsEmpty;
         }
 
-        protected override void OnAbort()
+        private void ForceClose()
         {
             try
             {
                 _socket.Shutdown(SocketShutdown.Both);
-                _socket.Disconnect(true);
+                //Cannot invoke Disconnect here, this would crash current thread, reason was unknown.
+                //_socket.Disconnect(true);
                 _socket.Close();
             }
-            catch { }
+            catch
+            { }
+        }
+
+        protected override void OnAbort()
+        {
+            ForceClose();
         }
 
         protected override IAsyncResult OnBeginClose(TimeSpan timeout, AsyncCallback callback, object state)
@@ -365,7 +373,7 @@ namespace WCFRawTcpTransport
 
         protected override void OnClose(TimeSpan timeout)
         {
-            OnAbort();
+            ForceClose();
         }
 
         protected override void OnEndClose(IAsyncResult result)
