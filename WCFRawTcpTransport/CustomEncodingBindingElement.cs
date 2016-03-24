@@ -41,7 +41,7 @@ namespace WCFRawTcpTransport
             if (_innerElement != null)
                 return;
 
-            _innerElement = context.BindingParameters.OfType<InnerEncoderBingdingElement>().FirstOrDefault();
+            _innerElement = context.Binding.Elements.OfType<InnerEncoderBingdingElement>().FirstOrDefault();
         }
 
         public override bool CanBuildChannelFactory<TChannel>(BindingContext context)
@@ -60,12 +60,14 @@ namespace WCFRawTcpTransport
 
         public override IChannelFactory<TChannel> BuildChannelFactory<TChannel>(BindingContext context)
         {
+            SetInnerElement(context);
             context.BindingParameters.Add(this);
             return context.BuildInnerChannelFactory<TChannel>();
         }
 
         public override IChannelListener<TChannel> BuildChannelListener<TChannel>(BindingContext context)
         {
+            SetInnerElement(context);
             context.BindingParameters.Add(this);
             return context.BuildInnerChannelListener<TChannel>();
         }

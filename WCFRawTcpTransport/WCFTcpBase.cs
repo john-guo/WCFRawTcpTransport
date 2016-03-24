@@ -12,7 +12,7 @@ namespace WCFRawTcpTransport
         protected InvokerStub _stub;
         protected CustomBinding _customBinding;
 
-        protected WCFTcpBase(IRealEncoder encoder)
+        protected WCFTcpBase(bool needEncoder, IRealEncoder encoder)
         {
             _stub = new InvokerStub();
             _stub.OnInvoke += OnInvoke;
@@ -20,6 +20,8 @@ namespace WCFRawTcpTransport
             _stub.Disconnect += _OnDisconnect;
 
             _customBinding = new CustomBinding();
+            if (needEncoder && encoder == null)
+                encoder = new DefaultInnerEncoder();
             if (encoder != null)
                 _customBinding.Elements.Add(new InnerEncoderBingdingElement(encoder));
             _customBinding.Elements.Add(new CustomEncodingBindingElement());

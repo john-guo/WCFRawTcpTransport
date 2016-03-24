@@ -10,7 +10,7 @@ namespace WCFRawTcpTransport
     {
         public const int MaxObjectPoolSize = 10000;
         public const int MaxBufferPoolSize = 100;
-        public const int MaxBufferSize = 65536;
+        public const int MaxBufferSize = 40960;
         public const string Action = "__Invoker";
         public const string BinaryMIME = "application/octet-stream";
         public const string Schema = "tcp";

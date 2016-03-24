@@ -22,7 +22,7 @@ namespace WCFRawTcpTransport
             public IInvokerServiceCallback Callback;
         }
 
-        public WCFTcpListener(string uri, IRealEncoder encoder) : base(encoder)
+        public WCFTcpListener(string uri, bool needEncoder, IRealEncoder encoder) : base(needEncoder, encoder)
         {
             _sessions = new ConcurrentDictionary<string, SessionItem>();
 
@@ -32,8 +32,13 @@ namespace WCFRawTcpTransport
             var behavior = new InvokerServiceEndpointBehavior();
             endpoint.EndpointBehaviors.Add(behavior);
         }
+        
+        public WCFTcpListener(string uri, bool needEncoder) : this(uri, needEncoder, null)
+        {
 
-        public WCFTcpListener(string uri) : this(uri, null)
+        }
+
+        public WCFTcpListener(string uri) : this(uri, true, null)
         {
 
         }

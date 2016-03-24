@@ -14,7 +14,7 @@ namespace WCFRawTcpTransport
         private DuplexChannelFactory<IInvokerService> _factory;
         private IInvokerService _service;
 
-        public WCFTcpClient(string uri, IRealEncoder encoder) : base(encoder)
+        public WCFTcpClient(string uri, bool needEncoder, IRealEncoder encoder) : base(needEncoder, encoder)
         {
             var address = new EndpointAddress(uri);
             var endpoint = new ServiceEndpoint(ContractDescription.GetContract(typeof(IInvokerService)), _customBinding, address);
@@ -24,7 +24,12 @@ namespace WCFRawTcpTransport
             _factory = new DuplexChannelFactory<IInvokerService>(new InstanceContext(_stub), endpoint);
         }
 
-        public WCFTcpClient(string uri) : this(uri, null)
+        public WCFTcpClient(string uri, bool needEncoder) : this(uri, needEncoder, null)
+        {
+
+        }
+
+        public WCFTcpClient(string uri) : this(uri, true, null)
         {
 
         }

@@ -29,9 +29,6 @@ namespace WCFRawTcpTransport
         {
             get
             {
-                if (_encoder == null)
-                    _encoder = new DefaultInnerEncoder();
-
                 return _encoder;
             }
         }
@@ -60,8 +57,31 @@ namespace WCFRawTcpTransport
             }
         }
 
+        private Message ReadMessageWithoutInnerEncoder(ArraySegment<byte> buffer, BufferManager bufferManager)
+        {
+            if (buffer.Count == 0)
+                return null;
+
+            byte[] obj = new byte[buffer.Count];
+            Buffer.BlockCopy(buffer.Array, buffer.Offset, obj, 0, buffer.Count);
+            var message = Message.CreateMessage(MessageVersion, CustomTransportConstant.Action, obj);
+            bufferManager.ReturnBuffer(buffer.Array);
+
+            return message;
+        }
+
+        public ArraySegment<byte> WriteMessageWithoutInnerEncoder(byte[] data, int messageOffset)
+        {
+            return new ArraySegment<byte>(data, messageOffset, data.Length);
+        }
+
         public override Message ReadMessage(ArraySegment<byte> buffer, BufferManager bufferManager, string contentType)
         {
+            if (InnerEncoder == null)
+            {
+                return ReadMessageWithoutInnerEncoder(buffer, bufferManager);
+            }
+
             if (buffer.Count > 0)
             {
                 var result = _receiveBuffer.TryAdd(buffer.Array, buffer.Offset, buffer.Count);
@@ -99,6 +119,11 @@ namespace WCFRawTcpTransport
         {
             var reader = message.GetReaderAtBodyContents();
             var data = reader.ReadElementContentAsBase64();
+
+            if (InnerEncoder == null)
+            {
+                return WriteMessageWithoutInnerEncoder(data, messageOffset);
+            }
 
             return InnerEncoder.TryWrite(data, bufferManager, messageOffset);
         }

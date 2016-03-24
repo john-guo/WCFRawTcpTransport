@@ -9,7 +9,7 @@ namespace TestConsole
 {
     class Server : WCFTcpListener
     {
-        public Server(string uri) : base(uri, new SimpleProtocolEncoder())
+        public Server(string uri) : base(uri, false)
         {
 
         }
