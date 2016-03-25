@@ -57,9 +57,11 @@ namespace WCFRawTcpTransport
             try
             {
                 var item = GetSessionItem(sessionId);
-                if (item.Callback == null)
-                    throw new InvalidOperationException();
+                if (item == null)
+                    return;
 
+                if (item.Callback == null)
+                    return;
 
                 item.Callback.Invoke(sessionId, data);
             }
@@ -85,6 +87,9 @@ namespace WCFRawTcpTransport
         protected override void OnInvoke(string sessionId, byte[] data)
         {
             var item = GetSessionItem(sessionId);
+
+            if (item == null)
+                return;
 
             if (item.Callback == null)
                 item.Callback = OperationContext.Current.GetCallbackChannel<IInvokerServiceCallback>();
