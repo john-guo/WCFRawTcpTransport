@@ -11,76 +11,60 @@ namespace WCFRawTcpTransport
     //TODO Optimize and thread safe
     class SimpleLoopBuffer : ISegmentBuffer
     {
-        private byte[] buffer;
-        private int begin;
-        private int end;
-        private int capacity;
-        private object locker;
+        private readonly object locker;
 
         public SimpleLoopBuffer(int maxSize)
         {
-            capacity = maxSize;
-            buffer = new byte[maxSize + 1];
+            Size = maxSize;
+            Array = new byte[maxSize + 1];
             locker = new object();
             Clear();
         }
 
         public bool IsEmpty
         {
-            get { return begin == end; }
+            get { return Begin == End; }
         }
         
         public bool IsFull
         {
             get
             {
-                if (begin == 0 && end == capacity)
+                if (Begin == 0 && End == Size)
                 {
                     return true;
                 }
 
-                return begin - 1 == end;
+                return Begin - 1 == End;
             }
         }
 
-        public int Begin
-        {
-            get { return begin; }
-        }
+        public int Begin { get; private set; }
 
-        public int End
-        {
-            get { return end; }
-        }
+        public int End { get; private set; }
 
-        public int Size
-        {
-            get { return capacity; }
-        }
+        public int Size { get; }
 
         public int Count
         {
             get
             {
-                if (begin > end)
+                if (Begin > End)
                 {
-                    return (Size - begin) + end; 
+                    return (Size - Begin) + End; 
                 }
 
-                return end - begin;
+                return End - Begin;
             }
         }
 
-        public byte[] Array
-        {
-            get { return buffer; }
-        }
+        public byte[] Array { get; }
 
         public void Clear()
         {
             lock(locker)
             {
-                begin = end = 0;
+                Begin = End = 0;
 
             }
         }
@@ -104,27 +88,27 @@ namespace WCFRawTcpTransport
                     if (length > Size - Count)
                         break;
 
-                    if (begin > end)
+                    if (Begin > End)
                     {
-                        Buffer.BlockCopy(data, offset, buffer, end, length);
-                        end += length;
+                        Buffer.BlockCopy(data, offset, Array, End, length);
+                        End += length;
                         ret = true;
                         break;
                     }
 
-                    int remain = buffer.Length - end;
+                    int remain = Array.Length - End;
                     if (length <= remain)
                     {
-                        Buffer.BlockCopy(data, offset, buffer, end, length);
-                        end = (end + length) % buffer.Length;
+                        Buffer.BlockCopy(data, offset, Array, End, length);
+                        End = (End + length) % Array.Length;
                         ret = true;
                         break;
                     }
 
-                    Buffer.BlockCopy(data, offset, buffer, end, remain);
-                    Buffer.BlockCopy(data, remain, buffer, 0, length - remain);
+                    Buffer.BlockCopy(data, offset, Array, End, remain);
+                    Buffer.BlockCopy(data, remain, Array, 0, length - remain);
 
-                    end = length - remain;
+                    End = length - remain;
 
                     ret = true;
 
@@ -139,7 +123,7 @@ namespace WCFRawTcpTransport
             lock (locker)
             {
                 if (!IsEmpty)
-                    begin = (begin + count) % buffer.Length;
+                    Begin = (Begin + count) % Array.Length;
             }
         }
 
@@ -158,27 +142,27 @@ namespace WCFRawTcpTransport
                     if (count == 0)
                         break;
 
-                    if (end >= begin)
+                    if (End >= Begin)
                     {
-                        Buffer.BlockCopy(buffer, begin, data, 0, count);
-                        begin += count;
+                        Buffer.BlockCopy(Array, Begin, data, 0, count);
+                        Begin += count;
                         ret = true;
                         break;
                     }
 
-                    int remain = buffer.Length - begin;
+                    int remain = Array.Length - Begin;
                     if (count <= remain)
                     {
-                        Buffer.BlockCopy(buffer, begin, data, 0, count);
-                        begin = (begin + count) % buffer.Length;
+                        Buffer.BlockCopy(Array, Begin, data, 0, count);
+                        Begin = (Begin + count) % Array.Length;
                         ret = true;
                         break;
                     }
 
-                    Buffer.BlockCopy(buffer, begin, data, 0, remain);
-                    Buffer.BlockCopy(buffer, 0, data, remain, count - remain);
+                    Buffer.BlockCopy(Array, Begin, data, 0, remain);
+                    Buffer.BlockCopy(Array, 0, data, remain, count - remain);
 
-                    begin = count - remain;
+                    Begin = count - remain;
 
                     ret = true;
                 } while (false);
@@ -202,23 +186,23 @@ namespace WCFRawTcpTransport
                     if (count == 0)
                         break;
 
-                    if (end >= begin)
+                    if (End >= Begin)
                     {
-                        Buffer.BlockCopy(buffer, begin, data, 0, count);
+                        Buffer.BlockCopy(Array, Begin, data, 0, count);
                         ret = true;
                         break;
                     }
 
-                    int remain = buffer.Length - begin;
+                    int remain = Array.Length - Begin;
                     if (count <= remain)
                     {
-                        Buffer.BlockCopy(buffer, begin, data, 0, count);
+                        Buffer.BlockCopy(Array, Begin, data, 0, count);
                         ret = true;
                         break;
                     }
 
-                    Buffer.BlockCopy(buffer, begin, data, 0, remain);
-                    Buffer.BlockCopy(buffer, 0, data, remain, count - remain);
+                    Buffer.BlockCopy(Array, Begin, data, 0, remain);
+                    Buffer.BlockCopy(Array, 0, data, remain, count - remain);
                     ret = true;
 
                 } while (false);

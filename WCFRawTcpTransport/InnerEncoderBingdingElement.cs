@@ -9,29 +9,24 @@ namespace WCFRawTcpTransport
 {
     public class InnerEncoderBingdingElement : BindingElement
     {
-        private IRealEncoder _encoder;
-
         public override BindingElement Clone()
         {
-            return new InnerEncoderBingdingElement(_encoder);
+            return new InnerEncoderBingdingElement(Encoder);
         }
 
         public InnerEncoderBingdingElement(IRealEncoder encoder)
         {
-            _encoder = encoder;
+            Encoder = encoder;
         }
 
         public override T GetProperty<T>(BindingContext context)
         {
             if (typeof(T) == typeof(IRealEncoder))
-                return (T)_encoder;
+                return (T)Encoder;
 
             return context.GetInnerProperty<T>();
         }
 
-        public IRealEncoder Encoder
-        {
-            get { return _encoder; }
-        }
+        public IRealEncoder Encoder { get; }
     }
 }
