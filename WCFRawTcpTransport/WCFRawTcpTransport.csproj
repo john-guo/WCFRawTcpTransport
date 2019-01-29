@@ -69,6 +69,8 @@
     <Compile Include="SimpleObjectPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleLoopBuffer.cs" />
+    <Compile Include="SocketDuplexSession.cs" />
+    <Compile Include="SocketSession.cs" />
     <Compile Include="WCFTcpBase.cs" />
     <Compile Include="WCFTcpClient.cs" />
     <Compile Include="WCFTcpListener.cs" />

@@ -16,13 +16,17 @@ namespace WCFRawTcpTransport
     {
         internal CustomTcpSocketSessionChannel(Socket socket, ChannelManagerBase channelManager, MessageEncoderFactory factory, BindingContext context)
             : base(socket, channelManager, factory, context)
-        { }
+        {
+            _session = new SocketDuplexSession(socket);
+        }
+
+        private SocketDuplexSession _session;
 
         public IDuplexSession Session
         {
             get
             {
-                return null;
+                return _session;
             }
         }
      }
