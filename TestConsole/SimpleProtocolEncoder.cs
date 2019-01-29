@@ -15,7 +15,7 @@ namespace TestConsole
         const int minMessageSize = headerSize + 1;
 
 
-        public bool TryRead(ISegementBuffer buffer, BufferManager bufferManager, out ArraySegment<byte> data)
+        public bool TryRead(ISegmentBuffer buffer, BufferManager bufferManager, out ArraySegment<byte> data)
         {
             byte[] item;
             data = default(ArraySegment<byte>);

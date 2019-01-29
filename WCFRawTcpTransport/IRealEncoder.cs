@@ -9,7 +9,7 @@ namespace WCFRawTcpTransport
 {
     public interface IRealEncoder
     {
-        bool TryRead(ISegementBuffer buffer, BufferManager bufferManager, out ArraySegment<byte> data);
+        bool TryRead(ISegmentBuffer buffer, BufferManager bufferManager, out ArraySegment<byte> data);
         ArraySegment<byte> TryWrite(byte[] data, BufferManager bufferManager, int messageOffset);
     }
 }

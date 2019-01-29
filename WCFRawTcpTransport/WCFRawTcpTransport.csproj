@@ -62,7 +62,7 @@
     <Compile Include="InvokerStub.cs" />
     <Compile Include="IObjectPool.cs" />
     <Compile Include="IPoolManager.cs" />
-    <Compile Include="ISegementBuffer.cs" />
+    <Compile Include="ISegmentBuffer.cs" />
     <Compile Include="IRealEncoder.cs" />
     <Compile Include="IInvokerService.cs" />
     <Compile Include="ISocketChannel.cs" />

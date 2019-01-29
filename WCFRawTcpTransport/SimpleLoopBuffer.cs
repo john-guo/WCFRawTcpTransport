@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace WCFRawTcpTransport
 {
     //TODO Optimize and thread safe
-    class SimpleLoopBuffer : ISegementBuffer
+    class SimpleLoopBuffer : ISegmentBuffer
     {
         private byte[] buffer;
         private int begin;

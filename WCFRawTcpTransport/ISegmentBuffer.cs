@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WCFRawTcpTransport
 {
-    public interface ISegementBuffer
+    public interface ISegmentBuffer
     {
         int Begin { get; }
         int End { get; }
